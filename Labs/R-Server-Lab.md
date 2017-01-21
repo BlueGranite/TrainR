@@ -8,7 +8,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+### Microsoft R Server Lab
+
 **R** is a very popular programming language with a rich set of features and packages that make it ideally suited for data analysis and modeling. 
+
 Traditionally, R works by loading, i.e copying, everything (including data sets) as objects in the memory.  This means that large data sets can quickly surpass the amount of memory needed to load them into an R session. Over time, many R packages have been introduced that attempt to overcome this limitation.  Some packages propose a way to more efficiently load and process the data, which would in turn allow us to work with larger data sizes.  This approach however can only take us so far, since efficiency eventually hits a wall.  Microsoft R Server (MSR) on the other hand takes a different approach.  MRS's **RevoScaleR** package stores the dataset on the disk (hard drive) and loads it only a **chunks** at a time (where each chunk is a certain number of rows) for processsing.  When the processing is done, it then moves to the next chunk of the data. By default, the **chunk size** is set to 500K rows, but we can change it to a lower number when dealing with *wider* datasets (lots of columns), and a larger number when dealing with *longer* data sets (few columns).  In other words, data in RevoScaleR is *external* (because it's stored on disk) and *distributed* (because we process it chunk-wise). This means we are no longer bound by memory when dealing with data: Our data can be as large as we have hard-disk to store it with, since at every point in time, we only load one chunk of the data as a memory object (an R **list** object to be specific), we never overexert the system's memory.  However, since there is no such thing as a free lunch, there is a cost to pay when working with distributed data: Since most open-source R algorithms for data processing and analysis (including most third-party packages) rely on the whole dataset to be loaded into the R session as a `data.frame` object, they no longer work *directly* with distributed data.  However, as we will see, 
 
 - Most data-processing steps (cleaning data, creating new columns or modifying existing ones) can still *indirectly* (and relatively easily) be used by RevoScaleR to process the distributed data, so that we can still leverage any R code we developed.  What we mean by *indirectly* will become clear as we cover a wide range of examples.  
@@ -16,6 +19,7 @@ Traditionally, R works by loading, i.e copying, everything (including data sets)
 
 Therefore, using `RevoScaleR` we can both leverage existing R functionality (such as what's offered by R's rich set of third-party packages) and use what `RevoScaleR` offers through it's own set of distributed functions.  One last advantage that `RevoScaleR`'s distributed functions offer is code portability: 
 Because open-source R's analytics functions are generally not parallel, using these algorithms in an inherently distributed environment like Hadoop means having to rewrite our R functions code in mappers and reducers that Hadoop understands, which can be a daunting task as we mentioned earlier.  The inherently parellel data processing and analysis functions in `RevoScaleR` on the other hand make them ideal for porting our code from MRS running on a single machine to MRS on a Hadoop cluster or other inherently distributed environments.
+
 
 ## The NYC Taxi data
 
@@ -121,6 +125,7 @@ rxGetInfo(nyc_xdf, getVarInfo = TRUE) # show column types and the first 10 rows
 head(nyc_xdf)
 ```
 
+
 ### Creating new features
 
 Once data in brought in for analysis, we can begin thinking about the interesting/relevant features that go into the analysis.  Our goal is primarily exploratory: we want to tell a story based on the data.  In that sense, any piece of information contained in the data can be useful.  Additionally, new information (or features) can be extracted from existing data points.  It is not only important to think of which features to extract, but also what their column type must be, so that later analyses run appropriately.  As a first example, consider a simple transformation for extracting the percentage that passengers tipped for the trip.
@@ -174,7 +179,6 @@ f_datetime_transformations <- function(data) { # transformation function for ext
 ```
 
 Before we apply the transformation to the data, it's usually a good idea to test it and make sure it's working.  We set aside a sample of the data as a `data.frame` for this purpose. Running the transformation function on `nyc_sample_df` should return the original data with the new columns.
-
 
 ```{r}
 library(lubridate)
@@ -234,6 +238,7 @@ Interesting results manifest themselves in the above plot:
 2. During the business hours (between 9AM and 6PM), about the same proportion of taxi trips take place (about 42 to 45 percent) for each day of the week, including weekends.  In other words, regardless of what day of the week it is, a little less than half of all trips take place beween 9AM and 6PM.
 3. We can see a spike in taxi rides between 6PM and 10PM on Thursday and Friday evenings, and a spike between 10PM and 1AM on Friday and especially Saturday evenings. Taxi trips between 1AM and 5AM spike up on Saturdays (the Friday late-night outings) and even more so on Sundays (the Saturday late-night outings).  They fall sharply on other days, but right slightly on Fridays (in anticipation!). In other words, more people go out on Thursdays but don't stay out late, even more people go out on Fridays and stay even later, but Saturday is the day most people choose for a really late outing.
 
+
 ### Adding neighborhoods
 
 We now add another set of features to the data: pickup and dropoff neighborhoods.  Getting neighborhood information from longitude and latitude is not something we can hardcode easily, so instead we rely a few GIS packages and a **shapefile** (coutesy of Zillow [http://www.zillow.com/howto/api/neighborhood-boundaries.htm]).  A shapefile is a file that contains geographical information inside of it, including information about boundaries separating geographical areas.  The `ZillowNeighborhoods-NY.shp` file has information about NYC neighborhoods.  After reading in the shapefile and setting the coordinates of the NYC taxi data, we can use the function `over` (part of the `sp` package) to find out pickup and dropoff neighborhoods.  We will not cover the specifics of working with shapefiles, and refer the user to the `maptools` package for documentation.
@@ -291,7 +296,6 @@ find_nhoods <- function(data) {
 
 Once again, it is a good idea to try the transformation function on the sample `data.frame` to catch any errors before deploying it to the whole data. Sometimes errors messages we get are more informative when we apply the transformation to a `data.frame`, and it's easier to trace it back and debug it.  So here we use `rxDataStep` and feed it `nyc_sample_df` (with no `outFile` argument) to see what the data looks like after applying the transformation function `find_nhoods` to it.
 
-
 ```{r}
 # test the function on a data.frame using rxDataStep
 head(rxDataStep(nyc_sample_df, transformFunc = find_nhoods, transformPackages = c("sp", "maptools"), 
@@ -299,7 +303,6 @@ head(rxDataStep(nyc_sample_df, transformFunc = find_nhoods, transformPackages = 
 ```
 
 If everything went well with the sample, we can now apply the transformation to the whole data and reasonably expect that it should work.
-
 
 ```{r}
 st <- Sys.time()
@@ -347,6 +350,7 @@ rxDataStep(nyc_xdf, nyc_xdf,
 rxSummary( ~ pickup_nb, nyc_xdf)
 ```
 
+
 ### Cleaning the data
 
 Data is messy and often needs to be cleaned before we can do much with it.  Looking at the above summaries and snapshots of the data, we can often tell how the data needs to be cleaned.  Here are some suggestions:
@@ -357,13 +361,11 @@ Data is messy and often needs to be cleaned before we can do much with it.  Look
 
 Now that we have the data with candidate outliers, we can examine it for certain patterns.  For example, we can plot a histogram of `trip_distance` and notice that almost all trips traveled a distance of less than 20 miles, with the great majority going less than 5 miles.
 
-
 ```{r}
 rxHistogram( ~ trip_distance, nyc_xdf, startVal = 0, endVal = 25, histType = "Percent", numBreaks = 20)
 ```
 
 There is a second peak around around trips that traveled between 16 and 20, which is worth examining further.  We can verify this by looking at which neighborhoods passengers are traveling from and to.
-
 
 ```{r}
 rxs <- rxSummary( ~ pickup_nhood:dropoff_nhood, nyc_xdf, rowSelection = (trip_distance > 15 & trip_distance < 22))
@@ -376,7 +378,6 @@ As we can see, `Gravesend-Sheepshead Bay` often appears as a destination, and su
 ### Examining outliers
 
 Let's see how we could use `RevoScaleR` to examine the data for outliers.  Our approach here is rather premitive, but the intent is to show how the use the tools:  We use `rxDataStep` and its `rowSelection` argument to extract all the data points that are candidate outliers.  By leaving out the `outFile` argument, we output the resulting dataset into a `data.frame`, which we call `odd_trips`.  Lastly, if we are too expansive in our outlier selection criteria, then the resulting `data.frame` could still have too many rows (which could clog the memory and make it slow to produce plots and other summaries).  So we create a new column `u` and populate it with random uniform numbers between 0 and 1, and we add `u < .05` to our `rowSelection` criteria.  We can adjust this number to end up with a smaller `data.frame` (threshold closer to 0) or a larger `data.frame` (threshold closer to 1).
-
 
 ```{r}
 # outFile argument missing means we output to data.frame
@@ -391,7 +392,6 @@ print(dim(odd_trips))
 ```
 
 Since the dataset with the candidate outliers is a `data.frame`, we can use any R function to examine it.  For example, we limit `odd_trips` to cases where a distance of more than 50 miles was traveled, plot a histogram of the fare amount the passenger paid, and color it based on wether the trip took more or less than 10 minutes.
-
 
 ```{r}
 odd_trips %>% 
@@ -408,7 +408,6 @@ As we can see, some of the trips that traveled over 50 miles cost nothing or nex
 ## Limiting data to Manhattan
 
 We now narrow our field of vision by focusing on trips that took place inside of Manhattan only, and which meet "reasonable" criteria for a trip.  Since we added new features to the data, we can also drop some old columns from the data so that the data can be processed faster.
-
 
 ```{r}
 input_xdf <- 'yellow_tripdata_2015_manhattan.xdf'
@@ -435,7 +434,6 @@ rxDataStep(nyc_xdf, mht_xdf,
 
 Since we limited the scope of the data, it might be a good idea to create a sample of the new data (as a `data.frame`).  Our last sample, `nyc_sample_df` was not a good sample, since we only took the top 1000 rows of the data.  This time, we use `rxDataStep` to create a random sample of the data, containing only 1 percent of the rows from the larger dataset.
 
-
 ```{r}
 mht_sample_df <- rxDataStep(mht_xdf, rowSelection = (u < .01), 
                             transforms = list(u = runif(.rxNumRows)))
@@ -458,13 +456,13 @@ centroids_sample <- rxkm_sample$centers %>%
 head(centroids_sample)
 ```
 
-In the above code chunk we used the `kmeans` function to cluster the sample dataset `mht_sample_df`. In `RevoScaleR`, there is a counterpart to the `kmeans` function called `rxKmeans`, but in addition to working with a `data.frame`, `rxKmeans` also works with XDF files.  We can therefore use `rxKmeans` to create clusters from the whole data instead of the sample represented by `mht_sample_df`.
+In the above code chunk we used the `kmeans` function to cluster the sample dataset `mht_sample_df`. In `RevoScaleR`, there is a counterpart to the `kmeans` function called `rxKmeans`, but in addition to working with a `data.frame`, `rxKmeans` also works with XDF files.
 
 Start this code, which will run for a few minutes. Now is a good time to get up, stretch, and take a break... (~ 7 minutes)
 
 ```{r}
 start_time <- Sys.time()
-rxkm <- rxKmeans( ~ long_std + lat_std, data = mht_xdf, outFile = mht_xdf, reportProgress = -1, 
+rxkm <- rxKmeans( ~ long_std + lat_std, data = mht_sample_df, outFile = mht_xdf, reportProgress = -1, 
                 outColName = "dropoff_cluster", overwrite = TRUE, centers = rxkm_sample$centers, 
                 transforms = list(long_std = dropoff_longitude / -74, lat_std = dropoff_latitude / 40),
                 blocksPerRead = 1, maxIterations = 500) # need to set this when writing to same file
@@ -478,7 +476,6 @@ head(clsdf)
 ```
 
 With a little bit of work, we can extract the cluster centroids from the resulting object and plot them on a  map.  As we can see, the results are not very different, however differences do exist and depending on the use case, such small diffences can have a lot of practical significance.  If for example we wanted to find out which spots taxis are more likely to drop off passengers and make it illegal for street vendors to operate at those spots (in order to avoid creating too much traffic), we can do a much better job of narrowing down the spots using the clusters created from the whole data.
-
 
 ```{r}
 library(ggmap)
@@ -502,6 +499,7 @@ require(gridExtra)
 grid.arrange(q1, q2, ncol = 2)
 ```
 
+
 ## Spatial patterns
 
 As our next task, we seek to find patterns between pickup and dropoff neighborhoods and other variables such as fare amount, trip distance, traffic and tipping.
@@ -514,7 +512,6 @@ Trip distance is shown in the data.  To estimate traffic by looking at the ratio
 For this analysis, we use the `rxCube` and `rxCrossTabs` are both very similar to `rxSummary` but they return fewer statistical summaries and therefore run faster.  With `y ~ u:v` as the formula, `rxCrossTabs` returns counts and sums, and `rxCube` returns counts and averages for column `y` broken up by any combinations of columns `u` and `v`.  Another important difference between the two functions is that `rxCrossTabs` returns an array but `rxCube` returns a `data.frame`.  Depending on the application in question, we may prefer one to the other (and of course we can always convert one form to the other by "reshaping" it, but doing so would involve extra work).
 
 Let's see what this means in action: We start by using `rxCrossTabs` to get sums and counts for `trip_distance`, broken up by `pickup_nb` and `dropoff_nb`.  We can immediately divide the sums by the counts to get averages.  The result is called a **distance matirx** and can be fed to the `seriate` function in the `seriation` library to order it so closer neighborhoods appear next to each other (right now neighborhoods are sorted alphabetically, which is what R does by default with factor levels unless otherwise specified).
-
 
 ```{r}
 rxct <- rxCrossTabs(trip_distance ~ pickup_nb:dropoff_nb, mht_xdf)
@@ -550,7 +547,6 @@ ggplot(res, aes(pickup_nb, dropoff_nb)) +
 
 The problem with the above plot is the order of the neighborhoods (which is alphabetical), which makes the plot somewhat arbitrary and useless.  But as we saw above, using the `seriate` function we found a more natural ordering for the neighborhoods, so we can use it to reorder the above plot in a more suitable way.  To reorder the plot, all we need to do is reorder the factor levels in the order given by `nb_order`.
 
-
 ```{r}
 newlevs <- levels(res$pickup_nb)[unlist(nb_order)]
 res$pickup_nb <- factor(res$pickup_nb, levels = unique(newlevs))
@@ -564,8 +560,7 @@ ggplot(res, aes(pickup_nb, dropoff_nb)) +
   coord_fixed(ratio = .9)
 ```
 
-Since trip distances remain fix, but trip duration mostly is a function of how much traffic there is, we can plot a look at the same plot as the above, but for the `minutes_per_mile` column, which will give us an idea of which neigborhoods have the most traffic between them.
-
+Since trip distances remain fixed, but trip duration mostly is a function of how much traffic there is, we can plot a look at the same plot as the above, but for the `minutes_per_mile` column, which will give us an idea of which neigborhoods have the most traffic between them.
 
 ```{r}
 ggplot(res, aes(pickup_nb, dropoff_nb)) + 
@@ -604,7 +599,6 @@ rxFactors(mht_xdf, outFile = mht_xdf, factorInfo = list(pickup_nb = list(newLeve
 ### Fare amount and tipping behavior
 
 Another interesting question to consider is the relationship between the fare amount and how much passengers tip in relation to which neighborhoods they travel between.  We create another plot similar to the ones above, showing fare amount on a grey background color scale, and displaying how much passengers tipped on average for the trip.  To make it easier to visually see patterns in tipping behavior, we color-code the average tip based on whether it's over 12%, less than 12%, less than 10%, less than 8%, and less than 5%.
-
 
 ```{r}
 res %>%
@@ -691,7 +685,6 @@ As we can see, a lot of trips claim Midtown regardless of where they ended.  The
 ### Differences throughout the day
 
 It is helpful to see whether trips between certain neighborhoods are more likely to occur sooner or later in the day, which can be answered with the plot shown here, which is color-coded by the average hour of the day the trips occured.
-
 
 ```{r}
 res <- rxCube(pickup_hour ~ pickup_nb:dropoff_nb, mht_xdf,
@@ -896,6 +889,7 @@ print(rxc)
 ```
 
 The correlation numbers are somewhat disappointing: as we can see the predictions from our model are not as well as expected. There can be different reasons our predictions are not very accurate, some apply across the board (such as having data that hasn't been properly cleaned, or leaving out important variables), and others are model-specific (for example, linear models can be sensetive to outliers while tree-based models are not). We examine such assumptions more thoroughly in our modeling course, as well as ways that we can improve our models, in another course.
+
 
 ## Conclusion
 
