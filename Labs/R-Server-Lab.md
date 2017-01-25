@@ -458,7 +458,7 @@ head(centroids_sample)
 
 In the above code chunk we used the `kmeans` function to cluster the sample dataset `mht_sample_df`. In `RevoScaleR`, there is a counterpart to the `kmeans` function called `rxKmeans`, but in addition to working with a `data.frame`, `rxKmeans` also works with XDF files.
 
-Start this code, which will run for a few minutes. Now is a good time to get up, stretch, and take a break... (~ 7-10 minutes)
+Start this code, which will run for a few minutes. Now is a good time to get up, stretch, and take a break... (~ 5-10 minutes)
 
 ```{r}
 start_time <- Sys.time()
@@ -475,7 +475,7 @@ clsdf <- cbind(
 head(clsdf)
 ```
 
-With a little bit of work, we can extract the cluster centroids from the resulting object and plot them on a  map.  As we can see, the results are not very different, however differences do exist and depending on the use case, such small diffences can have a lot of practical significance.  If for example we wanted to find out which spots taxis are more likely to drop off passengers and make it illegal for street vendors to operate at those spots (in order to avoid creating too much traffic), we can do a much better job of narrowing down the spots using the clusters created from the whole data.
+With a little bit of work, we can extract the cluster centroids from the resulting object and plot them on a  map.  As we can see, the results are not very different, however differences do exist and depending on the use case, such small differences can have a lot of practical significance.  For example, we may want to find out which spots taxis are more likely to drop off passengers and make it illegal for street vendors to operate at those spots (in order to avoid creating too much traffic). We can do a much better job of narrowing down the spots using the clusters created from the whole data.
 
 ```{r}
 library(ggmap)
