@@ -479,6 +479,11 @@ With a little bit of work, we can extract the cluster centroids from the resulti
 
 ```{r}
 library(ggmap)
+
+map_13 <- get_map(location =  c(lon = -73.98, lat = 40.76), zoom = 13)
+map_14 <- get_map(location =  c(lon = -73.98, lat = 40.76), zoom = 14)
+map_15 <- get_map(location =  c(lon = -73.98, lat = 40.76), zoom = 15)
+
 centroids_whole <- cbind(
   transmute(as.data.frame(rxkm$centers), long = long_std*(-74), lat = lat_std*40),
   size = rxkm$size, withinss = rxkm$withinss)
