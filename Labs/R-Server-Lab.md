@@ -266,7 +266,7 @@ ggplot(mht.df, aes(long, lat, fill = id)) +
   geom_path(color = "white") +
   coord_equal() +
   theme(legend.position = "none") +
-  geom_text_repel(aes(label = id), data = mht.cent, size = 3)
+  geom_text(aes(label = id), data = mht.cent, size = 3)
 ```
 
 ```{r}
