@@ -458,11 +458,11 @@ head(centroids_sample)
 
 In the above code chunk we used the `kmeans` function to cluster the sample dataset `mht_sample_df`. In `RevoScaleR`, there is a counterpart to the `kmeans` function called `rxKmeans`, but in addition to working with a `data.frame`, `rxKmeans` also works with XDF files.
 
-Start this code, which will run for a few minutes. Now is a good time to get up, stretch, and take a break... (~ 7 minutes)
+Start this code, which will run for a few minutes. Now is a good time to get up, stretch, and take a break... (~ 7-10 minutes)
 
 ```{r}
 start_time <- Sys.time()
-rxkm <- rxKmeans( ~ long_std + lat_std, data = mht_sample_df, outFile = mht_xdf, reportProgress = -1, 
+rxkm <- rxKmeans( ~ long_std + lat_std, data = mht_xdf, outFile = mht_xdf, reportProgress = -1, 
                 outColName = "dropoff_cluster", overwrite = TRUE, centers = rxkm_sample$centers, 
                 transforms = list(long_std = dropoff_longitude / -74, lat_std = dropoff_latitude / 40),
                 blocksPerRead = 1, maxIterations = 500) # need to set this when writing to same file
