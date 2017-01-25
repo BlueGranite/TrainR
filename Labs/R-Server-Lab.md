@@ -84,9 +84,9 @@ head(nyc_sample_df)
 Our first task is to read the data using MRS. MRS has two ways of dealing with flat files: (1) it can work directly with the flat files, meaning that it reads and writes to flat files directly, (2) it can convert flat files to a format called XDF (XDF stands for external data frame).  An XDF file is much smaller than a CSV file because it is compressed.  Its main advantage over a CSV file is that an XDF file can be read and processed much faster than a CSV file (we will run some benchmarks to see how much faster).  The disadvantage of an XDF file format is a format that only MRS understands and can work with.  So in order to decide whether we chose XDF or CSV we need to understand the tradeoffs involved:
 
 1. Converting from CSV to XDF is itself a cost in terms of runtime.
-2. Once the original CSVs are converted to XDFs, the runtime of processing (reading from and sometimes writing to) the XDFs is lower than what the it would have been if we had directly processed the CSVs instead.
+2. Once the original CSVs are converted to XDFs, the runtime of processing (reading from and sometimes writing to) the XDFs is lower than what it would have been if we had directly processed the CSVs instead.
 
-Since an anlytics workflow usually consists of cleaning and munging data, and then feeding that to various modeling and data-mining algorithms, the initial runtime of converting from CSV to XDF is quickly offset by the reduced runtime of working with the XDF file.  However, one-off kinds of analyses on datasets that are ready to be fed to the modeling algorithm might run faster if we skip XDF conversion.
+Since an analytics workflow usually consists of cleaning and munging data, and then feeding that to various modeling and data-mining algorithms, the initial runtime of converting from CSV to XDF is quickly offset by the reduced runtime of working with the XDF file.  However, one-off kinds of analyses on datasets that are ready to be fed to the modeling algorithm might run faster if we skip XDF conversion.
 
 We use the `rxImport` function to covert flat files to XDF files. By letting `append = "rows"`, we can also combine multiple flat files into a single XDF file.
 
@@ -106,7 +106,7 @@ nyc_xdf <- RxXdfData(input_xdf)
 rxSummary( ~ fare_amount, nyc_xdf) # provide statistical summaries for fare amount
 ```
 
-Note that we could have done the same analysis with the original CSV file and skipped XDF coversion. To run `rxSummary` on the CSV file, we simply create a pointer to the CSV file using `RxTextData` (instead of `RxXdfData` as was the case above) and pass the column types directly to it.  The rest is the same.  Notice how running the summary on the CSV file takes considerably longer.
+Note that we could have done the same analysis with the original CSV file and skipped XDF conversion. To run `rxSummary` on the CSV file, we simply create a pointer to the CSV file using `RxTextData` (instead of `RxXdfData` as was the case above) and pass the column types directly to it.  The rest is the same.  Notice how running the summary on the CSV file takes considerably longer.
 
 
 ```{r}
@@ -114,7 +114,7 @@ nyc_csv <- RxTextData(input_csv, colClasses = col_classes) # point to CSV file a
 rxSummary( ~ fare_amount, nyc_csv) # provide statistical summaries for fare amount
 ```
 
-The last example was run to demonstrate `RevoScaleR`'s capabilty to work directly with flat files (even though they take longer than XDF files), but since our analysis involves lots of data processing and running various analytics functions, from now on we work with the XDF file, so we can benefit from faster runtime.
+The last example was run to demonstrate `RevoScaleR`'s capability to work directly with flat files (even though they take longer than XDF files), but since our analysis involves lots of data processing and running various analytics functions, from now on we work with the XDF file, so we can benefit from faster runtime.
 
 
 ```{r}
@@ -146,7 +146,7 @@ rxDataStep(nyc_xdf, nyc_xdf,
 rxSummary( ~ tip_percent, nyc_xdf)
 ```
 
-In the last part `rxDataStep` was introduced to perform a simple one-liner transformation.  We now use `rxDataStep` again to perform some other, more complicated transformations.  We can sometimes perform these more complex transformations as longer one-liners using the `transforms` argument, following the above example.  But a cleaner way to do it is to create a function that contains the logic of our transformations and pass it to the `transformFunc` argument. This function takes the data as input and usually returns the same data as output with one or more columns added or modified. More specifically, the input to the transformation function is a `list` whose elements are the columns.  Otherwise, it is just like any R function. Using the `transformFunc` argument allows us to focus on writing a transformation function and quickly testing them on the sample `data.frame` before we run them on the whole data.
+In the last part `rxDataStep` was introduced to perform a simple one-line transformation.  We now use `rxDataStep` again to perform some other, more complicated transformations.  We can sometimes perform these more complex transformations as longer ones using the `transforms` argument, following the above example.  But a cleaner way to do it is to create a function that contains the logic of our transformations and pass it to the `transformFunc` argument. This function takes the data as input and usually returns the same data as output with one or more columns added or modified. More specifically, the input to the transformation function is a `list` whose elements are the columns.  Otherwise, it is just like any R function. Using the `transformFunc` argument allows us to focus on writing a transformation function and quickly testing them on the sample `data.frame` before we run them on the whole data.
 
 For the NYC Taxi data, we are interested in comparing trips based on day of week and the time of day.  Those two columns do not exist yet, but we can extract them from pickup datetime and dropoff datetime.  To extact the above features, we use the `lubridate` package, which has useful functions for dealing with date and time columns.  To perform these transformations, we use a transformation function called `f_datetime_transformations`.
 
