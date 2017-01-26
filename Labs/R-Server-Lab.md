@@ -886,14 +886,14 @@ rxSummary(~ SSE_linmod + SSE_dtree + SSE_dforest, data = mht_split$test,
                             SSE_dforest = (tip_percent - tip_percent_pred_dforest)^2))
 ```
 
-All models did surprisingly well. This could be an indication that we still have a lot of leftover signal to capture, i.e. the model is **underfitting**. This makes sense, given that there are still a lot of important columns in the data that we left out of the models, such as `payment_type` which has a strong influence on `tip_percent`. We can use RMSE (the square root of the numbers under the `Mean` column above) to compare the models with each other. We don't know how well they do predicting in the first place. So let's also look at the correlation between `tip_percent` and each of the models' predictions.
+We can use RMSE (the square root of the numbers under the `Mean` column above) to compare the models with each other, but we don't know how well they do predicting in the first place. So let's also look at the correlation between `tip_percent` and each of the models' predictions.
 
 ```{r}
 rxc <- rxCor( ~ tip_percent + tip_percent_pred_linmod + tip_percent_pred_dtree + tip_percent_pred_dforest, data = mht_split$test)
 print(rxc)
 ```
 
-The correlation numbers are somewhat disappointing: as we can see the predictions from our model are not as well as expected. There can be different reasons our predictions are not very accurate, some apply across the board (such as having data that hasn't been properly cleaned, or leaving out important variables), and others are model-specific (for example, linear models can be sensitive to outliers while tree-based models are not). 
+The correlation numbers are somewhat disappointing: as we can see, the predictions from our models do not correlate well to `tip_percent`. There can be different reasons our predictions are not very accurate. Some apply across the board (such as having data that hasn't been properly cleaned, or leaving out important variables). Others are model-specific (for example, linear models can be sensitive to outliers while tree-based models are not). 
 
 
 ## Conclusion
