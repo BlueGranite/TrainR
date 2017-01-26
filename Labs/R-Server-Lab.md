@@ -377,12 +377,12 @@ As we can see, `Gravesend-Sheepshead Bay` often appears as a destination, and su
 
 ### Examining outliers
 
-Let's see how we could use `RevoScaleR` to examine the data for outliers.  Our approach here is rather primitive, but the intent is to show how to use the tools:  We use `rxDataStep` and its `rowSelection` argument to extract all the data points that are candidate outliers.  By leaving out the `outFile` argument, we output the resulting dataset into a `data.frame`, which we call `odd_trips`.  Lastly, if we are too expansive in our outlier selection criteria, then the resulting `data.frame` could still have too many rows (which could clog the memory and make it slow to produce plots and other summaries).  So we create a new column `u` and populate it with random uniform numbers between 0 and 1, and we add `u < .05` to our `rowSelection` criteria.  We can adjust this number to end up with a smaller `data.frame` (threshold closer to 0) or a larger `data.frame` (threshold closer to 1).
+Let's see how we could use `RevoScaleR` to examine the data for outliers.  Our approach here is rather primitive, but the intent is to show how to use the tools:  We use `rxDataStep` and its `rowSelection` argument to extract all the data points that are candidate outliers.  By leaving out the `outFile` argument, we output the resulting dataset into a `data.frame`, which we call `odd_trips`.  Lastly, if we are too expansive in our outlier selection criteria, then the resulting `data.frame` could still have too many rows (which could clog the memory and make it slow to produce plots and other summaries).  So we create a new column `u` and populate it with random uniform numbers between 0 and 1, and we add `u < .15` to our `rowSelection` criteria.  We can adjust this number to end up with a smaller `data.frame` (threshold closer to 0) or a larger `data.frame` (threshold closer to 1).
 
 ```{r}
 # outFile argument missing means we output to data.frame
 odd_trips <- rxDataStep(nyc_xdf, rowSelection = (
-  u < .05 & ( # we can adjust this if the data gets too big
+  u < .15 & ( # we can adjust this if the data gets too big
     (trip_distance > 50 | trip_distance <= 0) |
     (passenger_count > 5 | passenger_count == 0) |
     (fare_amount > 5000 | fare_amount <= 0)
