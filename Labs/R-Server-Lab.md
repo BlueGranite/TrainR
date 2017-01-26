@@ -783,15 +783,8 @@ pred_df <- pred_df_simple %>%
 head(pred_df)
 ```
 
-We can see from the results above that the predictions with the simpler model are identical across all the days of the week and all the hours for the same pick-up and drop-off combination.  Whereas the predictions by the more complex model are unique for every combination of all four variables.  In other words, adding `pickup_dow:pickup_hour` to the model adds extra variation to the predictions, and what we'd like to know is if this variation contains important signals or if it more or less bahaves like noise. <!--To get to the answer, we compare the distribution of the two predictions when we break them up by `pickup_dow` and `pickup_hour`.
+We can see from the results above that the predictions with the simpler model are identical across all the days of the week and all the hours for the same pick-up and drop-off combination.  Whereas the predictions by the more complex model are unique for every combination of all four variables.  In other words, adding `pickup_dow:pickup_hour` to the model adds extra variation to the predictions, and what we'd like to know is if this variation contains important signals or if it more or less bahaves like noise. 
 
-```{r}
-ggplot(data = pred_df) +
-  geom_density(aes(x = tip_percent_Pred, col = "complex")) +
-  geom_density(aes(x = tip_percent_Pred_simple, col = "simple")) +
-  facet_grid(pickup_hour ~ pickup_dow)
-```
--->
 The simpler model shows the same distribution all throughout, because these two variables have no effect on its predictions, but the more complex model shows a slightly different distribution for each combination of `pickup_dow` and `pickup_hour`, usually in the form of a slight shift in the distribution. That shift represents the effect of `pickup_dow` and `pickup_hour` at each given combination of the two variables. Because the shift is directional (not haphazard), it's safe to say that it captures some kind of important signal (although its practical significance is still up for debate).
 
 So far we've only looked at two models from the same `rxLinMod` algorithm. When comparing the two, we looked at the way their predictions capture the effects of the variables used to build each model. To do the comparison, we built a dataset with all combinations of the variables used to build the models with, and then scored that dataset with the two models using `rxPredict`. By doing so we can see how the predictions are distributed, but we still don't know if the predictions are good. The true test of a model's performance is in its ability to predict **out of sample**, which is why we split the data in two and set aside a portion of it for model testing. 
@@ -835,7 +828,7 @@ We now run three different algorithms on the data:
   - `rxDTree`, the decision tree algorithm with the terms `tip_percent ~ pickup_nb + dropoff_nb + pickup_dow + pickup_hour` (decision trees don't need interactive factors because interactions are built into the algorithm itself)
   - `rxDForest`, the random forest algorithm with the same terms as decision trees
   
-Since this is not a detailed modeling course, we will not discuss how the algorthims are implemented. Instead, we run the algorithms and use them to predict tip percent on the test data so we can see which one works better.
+Since this is not a detailed modeling course, we will not discuss how the algorithms are implemented. Instead, we run the algorithms and use them to predict tip percent on the test data so we can see which one works better.
 
 ```{r}
 system.time(linmod <- rxLinMod(tip_percent ~ pickup_nb:dropoff_nb + pickup_dow:pickup_hour, 
