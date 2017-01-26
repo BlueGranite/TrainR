@@ -565,7 +565,7 @@ ggplot(res, aes(pickup_nb, dropoff_nb)) +
   coord_fixed(ratio = .9)
 ```
 
-Since trip distances remain fixed, but trip duration mostly is a function of how much traffic there is, we can plot a look at the same plot as the above, but for the `minutes_per_mile` column, which will give us an idea of which neigborhoods have the most traffic between them.
+Since trip distances remain fixed, but trip duration mostly is a function of how much traffic there is, we can plot the same plot as the above, but for the `minutes_per_mile` column, which will give us an idea of which neigborhoods have the most traffic between them.
 
 ```{r}
 ggplot(res, aes(pickup_nb, dropoff_nb)) + 
