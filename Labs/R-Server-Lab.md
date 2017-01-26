@@ -534,9 +534,9 @@ rxc1 <- rxCube(trip_distance ~ pickup_nb:dropoff_nb, mht_xdf)
 rxc2 <- rxCube(minutes_per_mile ~ pickup_nb:dropoff_nb, mht_xdf, 
                transforms = list(minutes_per_mile = (trip_duration/60)/trip_distance))
 rxc3 <- rxCube(tip_percent ~ pickup_nb:dropoff_nb, mht_xdf)
-res_df <- bind_cols(list(rxc1, rxc2, rxc3))
-res_df <- res_df[ , c('pickup_nb', 'dropoff_nb', 'trip_distance', 'minutes_per_mile', 'tip_percent')]
-head(res_df)
+res <- bind_cols(list(rxc1, rxc2, rxc3))
+res <- res[ , c('pickup_nb', 'dropoff_nb', 'trip_distance', 'minutes_per_mile', 'tip_percent')]
+head(res)
 ```
 
 We can start plotting the above results to see some interesting trends.
