@@ -835,7 +835,7 @@ We now run three different algorithms on the data:
   - `rxDTree`, the decision tree algorithm with the terms `tip_percent ~ pickup_nb + dropoff_nb + pickup_dow + pickup_hour` (decision trees don't need interactive factors because interactions are built into the algorithm itself)
   - `rxDForest`, the random forest algorithm with the same terms as decision trees
   
-Since this is not a modeling course, we will not discuss how the algorthims are implemented. Instead we run the algorithms and use them to predict tip percent on the test data so we can see which one works better.
+Since this is not a detailed modeling course, we will not discuss how the algorthims are implemented. Instead, we run the algorithms and use them to predict tip percent on the test data so we can see which one works better.
 
 ```{r}
 system.time(linmod <- rxLinMod(tip_percent ~ pickup_nb:dropoff_nb + pickup_dow:pickup_hour, 
@@ -871,9 +871,9 @@ ggplot(data = pred_df) +
   geom_density(aes(x = tip_percent_pred_dforest, col = "dforest")) # + facet_grid(pickup_hour ~ pickup_dow)
 ```
 
-Both the linear model and the random forest give us smooth predictions. We can see that the random forest predictions are the most concentrated. The predictions for the decision tree follow a jagged distribution, probably as a result of overfitting, but we don't know that until we check preformance against the test set.
+Both the linear model and the random forest give us smooth predictions. We can see that the random forest predictions are the most concentrated. The predictions for the decision tree follow a jagged distribution, probably as a result of overfitting, but we don't know that until we check performance against the test set.
 
-We now apply the model to the test data so we can compare the predictive power of each model. If we are correct about the decision tree overfitting, then we should see it preform poorly on the test data compared to the other two models. If we believe the random forest captures some inherent signals in the data that the linear model misses, we should see it perform better than the linear model on the test data.
+We now apply the model to the test data so we can compare the predictive power of each model. If we are correct about the decision tree overfitting, then we should see it perform poorly on the test data compared to the other two models. If we believe the random forest captures some inherent signals in the data that the linear model misses, we should see it perform better than the linear model on the test data.
 
 ```{r}
 rxPredict(trained.models$linmod, data = mht_split$test, outData = mht_split$test, predVarNames = "tip_percent_pred_linmod", overwrite = TRUE)
@@ -886,14 +886,14 @@ rxSummary(~ SSE_linmod + SSE_dtree + SSE_dforest, data = mht_split$test,
                             SSE_dforest = (tip_percent - tip_percent_pred_dforest)^2))
 ```
 
-All models did surprisingly well. This could be an indication that we still have a lot of left-over signal to capture, i.e. the model is **underfitting**. This makes sense, given that there are still a lot of important columns in the data that we left out of the models, such as `payment_type` which has a strong influence on `tip_percent`. We can use RMSE (the square root of the numbers under the `Mean` column above) to compare the models with each other, we don't know how well they do predicting in the first place. So let's also look at the correlation between `tip_percent` and each of the models' predictions.
+All models did surprisingly well. This could be an indication that we still have a lot of leftover signal to capture, i.e. the model is **underfitting**. This makes sense, given that there are still a lot of important columns in the data that we left out of the models, such as `payment_type` which has a strong influence on `tip_percent`. We can use RMSE (the square root of the numbers under the `Mean` column above) to compare the models with each other. We don't know how well they do predicting in the first place. So let's also look at the correlation between `tip_percent` and each of the models' predictions.
 
 ```{r}
 rxc <- rxCor( ~ tip_percent + tip_percent_pred_linmod + tip_percent_pred_dtree + tip_percent_pred_dforest, data = mht_split$test)
 print(rxc)
 ```
 
-The correlation numbers are somewhat disappointing: as we can see the predictions from our model are not as well as expected. There can be different reasons our predictions are not very accurate, some apply across the board (such as having data that hasn't been properly cleaned, or leaving out important variables), and others are model-specific (for example, linear models can be sensetive to outliers while tree-based models are not). We examine such assumptions more thoroughly in our modeling course, as well as ways that we can improve our models, in another course.
+The correlation numbers are somewhat disappointing: as we can see the predictions from our model are not as well as expected. There can be different reasons our predictions are not very accurate, some apply across the board (such as having data that hasn't been properly cleaned, or leaving out important variables), and others are model-specific (for example, linear models can be sensitive to outliers while tree-based models are not). 
 
 
 ## Conclusion
