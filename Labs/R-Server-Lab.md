@@ -723,7 +723,7 @@ ggplot(res, aes(pickup_dow, pickup_hour)) +
   geom_tile(aes(fill = fare_per_minute), colour = "white") + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   scale_fill_gradient(low = "white", high = "steelblue") +
-  geom_text(aes(label = sprintf('%dK riders\n (%d%% tip)', signif(Counts/1000, 2), round(tip_percent, 0))), size = 2.5) + 
+  geom_text(aes(label = sprintf('%dK riders', signif(Counts/1000, 2))), size = 2.5) + 
   coord_fixed(ratio = .9)
 ```
 
