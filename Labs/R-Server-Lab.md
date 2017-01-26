@@ -607,7 +607,7 @@ Another interesting question to consider is the relationship between the fare am
 
 ```{r}
 res %>%
-  mutate(tip_color = cut(tip_percent, c(0, 5, 8, 10, 12, 100))) %>%
+  mutate(tip_color = cut(tip_percent, c(0, 0.05, 0.08, 0.10, 0.12, 1))) %>%
   ggplot(aes(pickup_nb, dropoff_nb)) + 
   geom_tile(aes(fill = tip_color)) + 
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
